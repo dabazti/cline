@@ -137,6 +137,12 @@ export function buildSdkProviderConfig(
 		modelId: modelId ?? "",
 		apiKey: apiKey ?? "",
 		baseUrl,
+		...(sdkProviderId === "openai-compatible"
+			? {
+					sendSessionIdHeader: configuration.openAiSendSessionIdHeader === true,
+					sessionIdHeaderName: configuration.openAiSessionIdHeaderName?.trim() || "X-Session-ID",
+				}
+			: {}),
 		...(headers ? { headers } : {}),
 		...(vertexProviderConfig ?? {}),
 		// Proxy-aware fetch (see .clinerules/network.md); local model servers get

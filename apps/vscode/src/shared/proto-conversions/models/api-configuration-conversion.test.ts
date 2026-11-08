@@ -3,6 +3,16 @@ import { describe, expect, it } from "vitest"
 import { convertApiConfigurationToProto, convertProtoToApiConfiguration } from "./api-configuration-conversion"
 
 describe("api configuration provider conversion", () => {
+	it("persists the configurable OpenAI-compatible task header fields", () => {
+		const proto = convertApiConfigurationToProto({
+			openAiSendSessionIdHeader: true,
+			openAiSessionIdHeaderName: "X-LocalAI-Session-ID",
+		})
+		const result = convertProtoToApiConfiguration(proto)
+		expect(result.openAiSendSessionIdHeader).toBe(true)
+		expect(result.openAiSessionIdHeaderName).toBe("X-LocalAI-Session-ID")
+	})
+
 	it("round-trips SDK provider ids added after the legacy enum list", () => {
 		const providers: ApiProvider[] = ["poolside", "v0", "xiaomi", "tencent-tokenhub", "chutes", "aiand", "zai-coding-plan"]
 

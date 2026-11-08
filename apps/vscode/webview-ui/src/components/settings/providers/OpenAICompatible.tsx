@@ -496,6 +496,22 @@ export const OpenAICompatibleProvider = ({
 				)
 			})()}
 
+			<div style={{ marginBottom: 10, marginTop: 12 }}>
+				<VSCodeCheckbox
+					checked={apiConfiguration?.openAiSendSessionIdHeader === true}
+					onChange={(event: any) => handleFieldChange("openAiSendSessionIdHeader", event.target.checked === true)}>
+					Send task/session ID as HTTP header
+				</VSCodeCheckbox>
+				<DebouncedTextField
+					disabled={apiConfiguration?.openAiSendSessionIdHeader !== true}
+					initialValue={apiConfiguration?.openAiSessionIdHeaderName || "X-Session-ID"}
+					onChange={(value) => handleFieldChange("openAiSessionIdHeaderName", value)}
+					placeholder="X-Session-ID"
+					style={{ width: "100%", marginTop: 6 }}>
+					Header name
+				</DebouncedTextField>
+			</div>
+
 			{remoteConfigSettings?.azureApiVersion !== undefined ? (
 				<Tooltip>
 					<TooltipTrigger>

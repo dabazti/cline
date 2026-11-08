@@ -452,6 +452,8 @@ message ModelsApiOptions {
   optional string aihubmix_base_url = 42;
   optional string aihubmix_app_code = 43;
   optional bool azure_identity = 44;
+  optional bool open_ai_send_session_id_header = 45;
+  optional string open_ai_session_id_header_name = 46;
 
   // Plan mode configurations
   optional string plan_mode_api_provider = 100;
@@ -765,6 +767,8 @@ message ModelsApiConfiguration {
   optional string nous_research_api_key = 85;
   optional bool azure_identity = 86;
   optional string wandb_api_key = 87;
+  optional bool open_ai_send_session_id_header = 88;
+  optional string open_ai_session_id_header_name = 89;
 
   // Plan mode configurations
   optional string plan_mode_api_provider = 100;

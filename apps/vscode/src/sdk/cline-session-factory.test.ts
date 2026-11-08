@@ -42,7 +42,7 @@ const mocks = vi.hoisted(() => {
 				actModeApiModelId: "claude-sonnet-4-6",
 				apiKey: "test-key",
 			})),
-			getGlobalSettingsKey: vi.fn((key: string): boolean | undefined => {
+			getGlobalSettingsKey: vi.fn((key: string): boolean | string | undefined => {
 				if (key === "subagentsEnabled" || key === "useAutoCondense") {
 					return false
 				}
@@ -1649,6 +1649,35 @@ describe("buildSessionConfig", () => {
 			},
 		})
 		expect(config.systemPrompt).toContain("# Plan / Act Modes")
+	})
+
+	it("passes configured session header settings only to OpenAI-compatible sessions", async () => {
+		mocks.stateManager.getApiConfiguration.mockReturnValue({
+			actModeApiProvider: "openai",
+			actModeApiModelId: "local-model",
+			openAiBaseUrl: "http://localhost:8080/v1",
+			apiKey: "test-key",
+		} as any)
+		mocks.stateManager.getGlobalSettingsKey.mockImplementation((key: string) => {
+			if (key === "openAiSendSessionIdHeader") return true
+			if (key === "openAiSessionIdHeaderName") return "X-LocalAI-Session-ID"
+			return undefined
+		})
+
+		const openAiConfig = await buildSessionConfig({ cwd: "/workspace", mode: "act" })
+		expect(openAiConfig.providerConfig).toMatchObject({
+			providerId: "openai-compatible",
+			sendSessionIdHeader: true,
+			sessionIdHeaderName: "X-LocalAI-Session-ID",
+		})
+
+		mocks.stateManager.getApiConfiguration.mockReturnValue({
+			actModeApiProvider: "anthropic",
+			actModeApiModelId: "claude-sonnet-4-6",
+			apiKey: "test-key",
+		})
+		const anthropicConfig = await buildSessionConfig({ cwd: "/workspace", mode: "act" })
+		expect(anthropicConfig.providerConfig).not.toHaveProperty("sendSessionIdHeader")
 	})
 })
 

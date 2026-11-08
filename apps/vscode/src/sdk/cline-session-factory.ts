@@ -1124,6 +1124,13 @@ export async function buildSessionConfig(input: SessionConfigInput): Promise<Cor
 		...(azureProviderConfig ?? {}),
 		providerId: sdkProviderId,
 		modelId,
+		...(sdkProviderId === "openai-compatible"
+			? {
+					sendSessionIdHeader: StateManager.get().getGlobalSettingsKey("openAiSendSessionIdHeader") === true,
+					sessionIdHeaderName:
+						StateManager.get().getGlobalSettingsKey("openAiSessionIdHeaderName")?.toString().trim() || "X-Session-ID",
+				}
+			: {}),
 		...(apiKey ? { apiKey } : {}),
 		...(baseUrl !== undefined ? { baseUrl } : {}),
 		...(apiLine !== undefined ? { apiLine } : {}),

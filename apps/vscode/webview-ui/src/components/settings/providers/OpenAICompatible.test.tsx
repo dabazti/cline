@@ -679,4 +679,16 @@ describe("OpenAICompatibleProvider", () => {
 		expect(mocks.handleFieldChange).toHaveBeenCalledWith("azureApiVersion", "2026-01-01")
 		expect(mocks.handleFieldChange).toHaveBeenCalledWith("azureIdentity", true)
 	})
+
+	it("shows the session header disabled by default and persists opt-in", async () => {
+		renderProvider()
+		await act(async () => {})
+
+		const checkbox = screen.getByRole("checkbox", { name: "Send task/session ID as HTTP header" })
+		expect(checkbox).not.toBeChecked()
+		const headerName = screen.getByPlaceholderText("X-Session-ID")
+		expect(headerName).toBeDisabled()
+		fireEvent.click(checkbox)
+		expect(mocks.handleFieldChange).toHaveBeenCalledWith("openAiSendSessionIdHeader", true)
+	})
 })
