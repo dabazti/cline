@@ -34,12 +34,95 @@ export interface ResolveProviderRequestHeadersInput {
 	 * commit-message path, so no Cline surface depends on a meaningful id here.
 	 */
 	sessionId?: string;
+	/** Optional task-scoped header for OpenAI-compatible providers. */
+	sessionIdHeader?: { enabled: boolean; name: string };
 	source?: string;
 	defaultSource: string;
 	client?: ProviderRequestHeaderClientContext;
 	coreVersion: string;
 	openAiCodex?: OpenAICodexRequestHeaderContext;
 	headers?: ProviderRequestHeaderLayers;
+}
+
+const RESERVED_SESSION_HEADER_NAMES = new Set([
+	"authorization",
+	"proxy-authorization",
+	"cookie",
+	"set-cookie",
+	"host",
+	"connection",
+	"content-length",
+	"transfer-encoding",
+	"upgrade",
+	"keep-alive",
+	"te",
+	"trailer",
+	"proxy-connection",
+	"origin",
+	"referer",
+	"user-agent",
+	"accept",
+	"accept-encoding",
+	"accept-language",
+	"content-type",
+	"content-encoding",
+	"access-control-request-headers",
+	"access-control-request-method",
+	"access-control-allow-origin",
+	"cookie2",
+	"date",
+	"dnt",
+	"expect",
+	"max-forwards",
+	"via",
+	"permissions-policy",
+	"x-http-method",
+	"x-http-method-override",
+	"x-method-override",
+	"sec-websocket-key",
+	"sec-websocket-version",
+	"sec-websocket-protocol",
+	"sec-websocket-extensions",
+]);
+
+function buildSessionIdHeader(
+	input: ResolveProviderRequestHeadersInput,
+): Record<string, string> | undefined {
+	const setting = input.sessionIdHeader;
+	const sessionId = trimNonEmpty(input.sessionId);
+	if (
+		input.providerId !== "openai-compatible" ||
+		!setting?.enabled ||
+		!sessionId ||
+		!/^[\x20-\x7e\t]+$/.test(sessionId)
+	)
+		return undefined;
+	const name = setting.name.trim();
+	const lowerName = name.toLowerCase();
+	if (
+		!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name) ||
+		RESERVED_SESSION_HEADER_NAMES.has(lowerName) ||
+		lowerName.startsWith("proxy-") ||
+		lowerName.startsWith("sec-") ||
+		lowerName.startsWith("access-control-")
+	)
+		return undefined;
+	return { [name]: sessionId };
+}
+
+function mergeSessionIdHeader(
+	headers: Record<string, string> | undefined,
+	input: ResolveProviderRequestHeadersInput,
+): Record<string, string> | undefined {
+	const dynamic = buildSessionIdHeader(input);
+	if (!dynamic) return headers ? { ...headers } : undefined;
+	const name = Object.keys(dynamic)[0];
+	const withoutConflict = Object.fromEntries(
+		Object.entries(headers ?? {}).filter(
+			([key]) => key.toLowerCase() !== name.toLowerCase(),
+		),
+	);
+	return { ...withoutConflict, [name]: dynamic[name] };
 }
 
 export const DEFAULT_CLINE_REQUEST_HEADERS: Record<string, string> = {
@@ -175,9 +258,12 @@ export function resolveProviderRequestHeaders(
 			...(input.headers?.stored ?? {}),
 			...(input.headers?.config ?? {}),
 			...(input.headers?.session ?? {}),
+			...(buildSessionIdHeader(input) ?? {}),
 			...requiredHeaders,
 		};
 	}
-	const headers = resolveDefaultProviderHeaders(input.headers);
-	return headers ? { ...headers } : undefined;
+	return mergeSessionIdHeader(
+		resolveDefaultProviderHeaders(input.headers),
+		input,
+	);
 }

@@ -318,6 +318,10 @@ export interface ProviderConfig
 
 	/** Task/session ID for telemetry */
 	taskId?: string;
+	/** Send the current task ID using a configurable header for OpenAI-compatible requests. */
+	sendSessionIdHeader?: boolean;
+	/** Header name used when sendSessionIdHeader is enabled. */
+	sessionIdHeaderName?: string;
 
 	/** AbortSignal for cancelling requests */
 	abortSignal?: AbortSignal;

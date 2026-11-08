@@ -209,4 +209,71 @@ describe("resolveProviderRequestHeaders", () => {
 			});
 		}
 	});
+
+	describe("configurable OpenAI-compatible session header", () => {
+		const base = {
+			providerId: "openai-compatible",
+			defaultSource: "vscode",
+			coreVersion: "1.0.0",
+			sessionIdHeader: { enabled: true, name: "X-LocalAI-Session-ID" },
+		};
+
+		it("is opt-in and uses each request's current session id", () => {
+			expect(
+				resolveProviderRequestHeaders({ ...base, sessionId: "task-a" }),
+			).toEqual({ "X-LocalAI-Session-ID": "task-a" });
+			expect(
+				resolveProviderRequestHeaders({ ...base, sessionId: "task-b" }),
+			).toEqual({ "X-LocalAI-Session-ID": "task-b" });
+			expect(
+				resolveProviderRequestHeaders({
+					...base,
+					sessionId: "task-a",
+					sessionIdHeader: { enabled: false, name: "X-LocalAI-Session-ID" },
+				}),
+			).toBeUndefined();
+		});
+
+		it("accepts arbitrary valid names and replaces case-insensitive static conflicts", () => {
+			expect(
+				resolveProviderRequestHeaders({
+					...base,
+					sessionId: "resumed-task",
+					sessionIdHeader: { enabled: true, name: "X-Correlation_ID" },
+					headers: {
+						config: { "x-correlation_id": "static", "X-Other": "kept" },
+					},
+				}),
+			).toEqual({ "X-Other": "kept", "X-Correlation_ID": "resumed-task" });
+		});
+
+		it("rejects invalid and reserved names, and leaves other providers unchanged", () => {
+			for (const name of [
+				"Bad Header",
+				"Authorization",
+				"COOKIE",
+				"Host",
+				"Content-Length",
+				"Proxy-Authenticate",
+				"Sec-Fetch-Site",
+				"Access-Control-Request-Headers",
+				"\r\nInjected: x",
+			]) {
+				expect(
+					resolveProviderRequestHeaders({
+						...base,
+						sessionId: "task",
+						sessionIdHeader: { enabled: true, name },
+					}),
+				).toBeUndefined();
+			}
+			expect(
+				resolveProviderRequestHeaders({
+					...base,
+					providerId: "anthropic",
+					sessionId: "task",
+				}),
+			).toBeUndefined();
+		});
+	});
 });
