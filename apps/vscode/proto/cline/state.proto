@@ -289,6 +289,8 @@ message Settings {
   optional OpenRouterModelInfo act_mode_cline_pass_model_info = 186;
   optional bool cloud_sessions_enabled = 188;
   optional string open_telemetry_traces_exporter = 189;
+  optional bool open_ai_send_session_id_header = 190;
+  optional string open_ai_session_id_header_name = 191;
 }
 
 message State {

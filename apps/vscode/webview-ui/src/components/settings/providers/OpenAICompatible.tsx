@@ -504,9 +504,9 @@ export const OpenAICompatibleProvider = ({
 				</VSCodeCheckbox>
 				{apiConfiguration?.openAiSendSessionIdHeader === true && (
 					<DebouncedTextField
-						initialValue={apiConfiguration?.openAiSessionIdHeaderName || "X-Session-ID"}
+						initialValue={apiConfiguration?.openAiSessionIdHeaderName ?? ""}
 						onChange={(value) => handleFieldChange("openAiSessionIdHeaderName", value)}
-						placeholder="X-Session-ID"
+						placeholder="Default: X-Session-ID"
 						style={{ width: "100%", marginTop: 6 }}>
 						Header name
 					</DebouncedTextField>

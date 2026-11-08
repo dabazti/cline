@@ -305,6 +305,10 @@ describe("State Keys Type Safety", () => {
 			}
 		})
 
+		it("leaves the configurable session header name unset by default", () => {
+			expect(getDefaultValue("openAiSessionIdHeaderName")).to.be.undefined
+		})
+
 		it("should return undefined for keys without defaults", () => {
 			// Keys with `undefined` as default should return undefined
 			const keysWithUndefinedDefaults = GlobalStateAndSettingKeys.filter((key) => {

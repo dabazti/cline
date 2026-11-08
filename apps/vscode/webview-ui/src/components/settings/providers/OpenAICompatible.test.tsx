@@ -693,16 +693,22 @@ describe("OpenAICompatibleProvider", () => {
 
 		let checkbox = screen.getByRole("checkbox", { name: "Send task/session ID as HTTP header" })
 		expect(checkbox).not.toBeChecked()
-		expect(screen.queryByPlaceholderText("X-Session-ID")).not.toBeInTheDocument()
+		expect(screen.queryByPlaceholderText("Default: X-Session-ID")).not.toBeInTheDocument()
 		fireEvent.click(checkbox)
 		expect(mocks.handleFieldChange).toHaveBeenCalledWith("openAiSendSessionIdHeader", true)
 
 		apiConfiguration = { ...apiConfiguration, openAiSendSessionIdHeader: true }
 		mocks.useExtensionState.mockReturnValue({ apiConfiguration, remoteConfigSettings: undefined })
 		rerender(<OpenAICompatibleProvider currentMode="act" providerId="custom-openai" showModelOptions={false} />)
-		expect(screen.getByPlaceholderText("X-Session-ID")).toHaveValue("X-Custom-Session")
+		expect(screen.getByPlaceholderText("Default: X-Session-ID")).toHaveValue("X-Custom-Session")
 
-		fireEvent.change(screen.getByPlaceholderText("X-Session-ID"), { target: { value: "X-Retained-Session" } })
+		fireEvent.change(screen.getByPlaceholderText("Default: X-Session-ID"), { target: { value: "" } })
+		expect(mocks.handleFieldChange).toHaveBeenCalledWith("openAiSessionIdHeaderName", "")
+		apiConfiguration = { ...apiConfiguration, openAiSessionIdHeaderName: "" }
+		mocks.useExtensionState.mockReturnValue({ apiConfiguration, remoteConfigSettings: undefined })
+		rerender(<OpenAICompatibleProvider currentMode="act" providerId="custom-openai" showModelOptions={false} />)
+
+		fireEvent.change(screen.getByPlaceholderText("Default: X-Session-ID"), { target: { value: "X-Retained-Session" } })
 		expect(mocks.handleFieldChange).toHaveBeenCalledWith("openAiSessionIdHeaderName", "X-Retained-Session")
 		apiConfiguration = { ...apiConfiguration, openAiSessionIdHeaderName: "X-Retained-Session" }
 		mocks.useExtensionState.mockReturnValue({ apiConfiguration, remoteConfigSettings: undefined })
@@ -714,7 +720,7 @@ describe("OpenAICompatibleProvider", () => {
 		apiConfiguration = { ...apiConfiguration, openAiSendSessionIdHeader: false }
 		mocks.useExtensionState.mockReturnValue({ apiConfiguration, remoteConfigSettings: undefined })
 		rerender(<OpenAICompatibleProvider currentMode="act" providerId="custom-openai" showModelOptions={false} />)
-		expect(screen.queryByPlaceholderText("X-Session-ID")).not.toBeInTheDocument()
+		expect(screen.queryByPlaceholderText("Default: X-Session-ID")).not.toBeInTheDocument()
 
 		checkbox = screen.getByRole("checkbox", { name: "Send task/session ID as HTTP header" })
 		fireEvent.click(checkbox)
@@ -722,6 +728,22 @@ describe("OpenAICompatibleProvider", () => {
 		apiConfiguration = { ...apiConfiguration, openAiSendSessionIdHeader: true }
 		mocks.useExtensionState.mockReturnValue({ apiConfiguration, remoteConfigSettings: undefined })
 		rerender(<OpenAICompatibleProvider currentMode="act" providerId="custom-openai" showModelOptions={false} />)
-		expect(screen.getByPlaceholderText("X-Session-ID")).toHaveValue("X-Retained-Session")
+		expect(screen.getByPlaceholderText("Default: X-Session-ID")).toHaveValue("X-Retained-Session")
+	})
+
+	it("leaves the header name empty and shows the default as a placeholder", async () => {
+		mocks.useExtensionState.mockReturnValue({
+			apiConfiguration: {
+				azureApiVersion: "2025-04-01-preview",
+				azureIdentity: false,
+				openAiSendSessionIdHeader: true,
+			},
+			remoteConfigSettings: undefined,
+		})
+		renderProvider()
+		await act(async () => {})
+
+		const headerName = screen.getByPlaceholderText("Default: X-Session-ID")
+		expect(headerName).toHaveValue("")
 	})
 })

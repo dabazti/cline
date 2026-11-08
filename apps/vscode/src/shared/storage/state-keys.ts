@@ -112,7 +112,7 @@ const API_HANDLER_SETTINGS_FIELDS = {
 	liteLlmUsePromptCache: { default: undefined as boolean | undefined },
 	openAiHeaders: { default: {} as Record<string, string> },
 	openAiSendSessionIdHeader: { default: false as boolean },
-	openAiSessionIdHeaderName: { default: "X-Session-ID" as string },
+	openAiSessionIdHeaderName: { default: undefined as string | undefined },
 	anthropicBaseUrl: { default: undefined as string | undefined },
 	openRouterProviderSorting: { default: undefined as string | undefined },
 	awsRegion: { default: undefined as string | undefined },
