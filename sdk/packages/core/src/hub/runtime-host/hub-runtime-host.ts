@@ -145,9 +145,17 @@ function buildCommandSessionConfig(
 		...(input.config as Record<string, unknown>),
 		sessionId,
 	};
+	const sessionProviderConfig =
+		input.config.providerConfig?.providerId === input.config.providerId
+			? input.config.providerConfig
+			: undefined;
 	const headers = resolveProviderRequestHeaders({
 		providerId: input.config.providerId,
 		sessionId,
+		sessionIdHeader: {
+			enabled: sessionProviderConfig?.sendSessionIdHeader === true,
+			name: sessionProviderConfig?.sessionIdHeaderName ?? "X-Session-ID",
+		},
 		source: input.source,
 		defaultSource: SessionSource.CORE,
 		client: {

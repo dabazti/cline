@@ -250,6 +250,50 @@ describe("HubRuntimeHost", () => {
 		restartLocalHubIfIdleAfterStartupTimeoutMock.mockReset();
 	});
 
+	it("bakes the configured OpenAI-compatible session header into hub sessions", async () => {
+		subscribeMock.mockReturnValue(() => {});
+		commandMock.mockResolvedValue({
+			payload: {
+				session: {
+					sessionId: "sess-dynamic-header",
+					status: "running",
+					createdAt: Date.now(),
+					updatedAt: Date.now(),
+					cwd: "/tmp/project",
+					workspaceRoot: "/tmp/project",
+				},
+			},
+		});
+		const { HubRuntimeHost } = await import("./hub-runtime-host");
+		const host = new HubRuntimeHost({ url: "ws://127.0.0.1:25463/hub" });
+		await host.startSession({
+			config: {
+				...createConfig(),
+				sessionId: "sess-dynamic-header",
+				providerId: "openai-compatible",
+				providerConfig: {
+					providerId: "openai-compatible",
+					modelId: "test-model",
+					sendSessionIdHeader: true,
+					sessionIdHeaderName: "X-LocalAI-Session-ID",
+				},
+				headers: { "x-localai-session-id": "static-value" },
+			},
+			source: SessionSource.CLI,
+		});
+
+		expect(commandMock).toHaveBeenCalledWith(
+			"session.create",
+			expect.objectContaining({
+				sessionConfig: expect.objectContaining({
+					headers: expect.objectContaining({
+						"X-LocalAI-Session-ID": "sess-dynamic-header",
+					}),
+				}),
+			}),
+		);
+	});
+
 	it("does not auto-start a run during session creation", async () => {
 		subscribeMock.mockReturnValue(() => {});
 		commandMock.mockResolvedValue({

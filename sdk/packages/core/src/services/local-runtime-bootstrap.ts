@@ -208,6 +208,10 @@ function buildProviderConfig(
 	const resolvedHeaders = resolveProviderRequestHeaders({
 		providerId: config.providerId,
 		sessionId,
+		sessionIdHeader: {
+			enabled: sessionProviderConfig?.sendSessionIdHeader === true,
+			name: sessionProviderConfig?.sessionIdHeaderName ?? "X-Session-ID",
+		},
 		source,
 		defaultSource: SessionSource.CLI,
 		client: {

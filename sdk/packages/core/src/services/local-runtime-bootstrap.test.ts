@@ -990,6 +990,61 @@ describe("prepareLocalRuntimeBootstrap", () => {
 		});
 	});
 
+	it("uses the durable session id for enabled OpenAI-compatible request headers", async () => {
+		const { prepareLocalRuntimeBootstrap } = await import(
+			"./local-runtime-bootstrap"
+		);
+		const start = async (
+			sessionId: string,
+			enabled: boolean,
+			providerId = "openai-compatible",
+		) => {
+			const input = createStartInput() as ReturnType<typeof createStartInput> & {
+				config: ReturnType<typeof createStartInput>["config"] & {
+					providerConfig?: Record<string, unknown>
+				}
+			};
+			input.config.providerId = providerId;
+			input.config.providerConfig = {
+				providerId,
+				modelId: "test-model",
+				apiKey: "test-key",
+				sendSessionIdHeader: enabled,
+				sessionIdHeaderName: "X-LocalAI-Session-ID",
+				headers: { "x-localai-session-id": "static-value" },
+			};
+			return prepareLocalRuntimeBootstrap({
+				input,
+				sessionId,
+				providerSettingsManager: createProviderSettingsManager() as never,
+				defaultTelemetry: undefined,
+				defaultToolPolicies: undefined,
+				onPluginEvent: () => {},
+				onTeamEvent: () => {},
+				createSpawnTool,
+				readSessionMetadata: async () => undefined,
+				writeSessionMetadata: async () => {},
+			});
+		};
+
+		const created = await start("task-new", true);
+		const resumed = await start("task-resumed", true);
+		const disabled = await start("task-disabled", false);
+		const otherProvider = await start("task-other", true, "anthropic");
+		expect(created.providerConfig.headers).toMatchObject({
+			"X-LocalAI-Session-ID": "task-new",
+		});
+		expect(resumed.providerConfig.headers).toMatchObject({
+			"X-LocalAI-Session-ID": "task-resumed",
+		});
+		expect(disabled.providerConfig.headers).not.toHaveProperty(
+			"X-LocalAI-Session-ID",
+		);
+		expect(otherProvider.providerConfig.headers).not.toHaveProperty(
+			"X-LocalAI-Session-ID",
+		);
+	});
+
 	it("prefers configured extensionContext.client over header-derived identity", async () => {
 		const { prepareLocalRuntimeBootstrap } = await import(
 			"./local-runtime-bootstrap"
